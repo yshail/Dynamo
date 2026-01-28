@@ -1,23 +1,27 @@
 const cheerio = require("cheerio");
 const axios = require("axios");
 
-const url = "https://quotes.toscrape.com/";
+const wrapAsync = require("./wrapAsync");
 
-axios.get(url).then((res) => {
-  const html = res.data;
-  const $ = cheerio.load(html);
-  $(".quote").each((index, element) => {
-    const text = $(element).find(".text").text();
-    const author = $(element).find(".author").text();
-    const tags = $(element)
-      .find(".tags .tag")
-      .map((i, el) => $(el).text().trim())
-      .get();
-    const out = {
-      text,
-      author,
-      tags,
-    };
-    console.log(out);
+const pageNumber = 1;
+const url = `https://books.toscrape.com/catalogue/page-${pageNumber}.html`;
+
+const pageData = wrapAsync(async () => {
+  const { data } = await axios.get(url);
+  const $ = cheerio.load(data);
+
+  $(".product_pod").each((index, list) => {
+    const bookTitle = $(list).find("h3 a").attr("title");
+    const bookPrice = $(list).find("p.price_color").text();
+    let rating = $(list).find(".star-rating").attr("class").split(" ");
+    rating = rating[1];
+
+    console.log({
+      bookTitle,
+      bookPrice,
+      rating,
+    });
   });
 });
+
+pageData();
